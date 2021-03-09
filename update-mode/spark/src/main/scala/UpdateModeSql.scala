@@ -1,12 +1,10 @@
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.max
 import org.apache.spark.sql.types.StructType
 
-object CompleteMode {
+object UpdateModeSql {
   def main(args: Array[String]): Unit = {
-
     val spark = SparkSession.builder
-      .appName("Grouping in complete mode")
+      .appName("Aggregations in update mode")
       .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR")
@@ -23,7 +21,7 @@ object CompleteMode {
 
     val stockPricesDf = spark.readStream
       .option("header", "true")
-      .option("maxFilesPerTrigger", 2)
+      .option("maxFilesPerTrigger", 10)
       .schema(schema)
       .csv("file:///mnt/c/Users/USER/Desktop/POC-spark-structured-streaming/complete-mode/datasets/stock_data")
 
@@ -32,18 +30,23 @@ object CompleteMode {
 
     stockPricesDf.printSchema()
 
-    val maxCloseDf = stockPricesDf
-      .groupBy("Name")
-      .agg(max("Close"))
-      .withColumnRenamed("max(Close)", "Maximum Close")
+    stockPricesDf.createOrReplaceTempView("stock_prices")
+
+    val maxCloseDf = spark.sql(
+      """
+        |SELECT Name, MAX(Close) as max_close
+        |FROM stock_prices
+        |GROUP BY Name
+        |""".stripMargin)
 
     maxCloseDf.writeStream
-      .outputMode("complete")
+      .outputMode("update")
       .format("console")
       .option("truncate", "false")
       .option("numRows", 30)
       .start()
       .awaitTermination()
+
 
   }
 }

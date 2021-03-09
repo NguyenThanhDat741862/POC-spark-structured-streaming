@@ -5,7 +5,7 @@ object CompleteModeSql {
   def main(args: Array[String]): Unit = {
 
     val spark = SparkSession.builder
-      .appName("Projections in complete mode")
+      .appName("Grouping in complete mode")
       .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR")
