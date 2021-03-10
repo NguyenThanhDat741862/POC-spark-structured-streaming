@@ -4,7 +4,7 @@ object SchemaInference {
   def main(args: Array[String]): Unit = {
 
     val spark = SparkSession.builder
-      .appName("Aggregations in update mode")
+      .appName("Schema inference")
       .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR")
